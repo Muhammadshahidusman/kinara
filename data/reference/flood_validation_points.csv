@@ -1,0 +1,8 @@
+# Reference points for flood threshold calibration (scripts/calibrate_flood.py). Need at least 30.
+# One row per location seen flooded (flooded=1) or seen dry (flooded=0) between 26 Aug and 5 Sep 2025.
+# lon/lat in WGS 84 decimal degrees, placed on the exact spot in the photo or video (Google Earth Pro helps).
+# Include dry locations too: without them only sensitivity can be measured.
+# Candidate sources: Dawn 29 Aug 2025 (dawn.com/news/1938079), Express Tribune 30 Aug 2025
+# (tribune.com.pk/story/2564010), Rescue 1122 / PDMA press photos, drone videos of Theme Park,
+# Park View City, Shafiqabad, Farrukhabad, Talat Park, Afghan Colony, Mohlanwal.
+point_id,lon,lat,flooded,observed_date,place,source,url,notes

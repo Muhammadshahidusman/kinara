@@ -1,0 +1,30 @@
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Secrets
+.env
+
+# Data: only reference files are versioned
+data/raw/*
+data/interim/*
+data/processed/*
+data/gee_exports/*
+!data/**/README.txt
+*.tif
+*.tiff
+# Boundary files of unconfirmed licence: kept locally, not published
+data/reference/boundaries/
+
+# Frontend
+web/node_modules/
+web/dist/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db

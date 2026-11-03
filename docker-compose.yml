@@ -1,0 +1,30 @@
+# Adapted from LPVIS docker-compose.yml.
+#   copy .env.example .env      (set POSTGRES_PASSWORD)
+#   docker compose up -d        -> PostGIS on :5432, API on http://localhost:8000
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: kinara
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: kinara
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kinara"]
+      interval: 5s
+      retries: 10
+  api:
+    build: { context: ., dockerfile: docker/api.Dockerfile }
+    environment:
+      DATABASE_URL: postgresql://kinara:${POSTGRES_PASSWORD}@db:5432/kinara
+      KINARA_SECRET_KEY: ${KINARA_SECRET_KEY:?set KINARA_SECRET_KEY in .env}
+    volumes:
+      - ./data:/srv/data
+    ports: ["8000:8000"]
+    depends_on:
+      db: { condition: service_healthy }
+volumes:
+  pgdata:

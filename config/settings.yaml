@@ -1,0 +1,94 @@
+# Kinara settings. Every script and the API read from here.
+# Paths are relative to the Kinara folder unless absolute.
+# Override the file location with the KINARA_CONFIG environment variable.
+
+project:
+  name: Kinara
+  tagline: Ravi Floodplain Watch
+  crs_analysis: "EPSG:32643"   # WGS 84 / UTM 43N: all area and distance work
+  crs_web: "EPSG:4326"
+
+paths:
+  raw: data/raw                 # downloads exactly as received (read-only)
+  interim: data/interim         # clipped / reprojected / cleaned, made by scripts
+  processed: data/processed     # analysis-ready layers the API serves
+  reference: data/reference     # boundaries, place-name lookup
+  gee_exports: data/gee_exports # CSV / GeoTIFF downloaded from the Drive folder below
+
+area:
+  district_boundary: data/reference/boundaries/Lahore_District_Boundary.shp
+  tehsil_boundaries: data/reference/boundaries/Lahore_Tehsil_Boundaries.shp
+  district_area_km2: 1793.8     # sanity check value for the official boundary
+  tehsil_name_field: tehsil
+  # Mouza boundaries live OUTSIDE this repo (source/licence not yet confirmed, so not versioned).
+  # Leave empty to run without mouza names ("not available" is shown instead).
+  mouza_boundaries: ""               # local file, set KINARA_MOUZA_FILE in .env (licence unconfirmed, not in repo)
+  mouza_fields: {id: MOUZA_ID, name: Mouza, name_ur: MOUZA_U, tehsil: Tehsil}
+
+gee:
+  project_id: ""                     # set KINARA_EE_PROJECT in .env (your Earth Engine Cloud project)
+  drive_folder: "kinara_exports"
+  district_asset: ""                 # optional; empty = read area.district_boundary locally
+
+floodplain:
+  definition: hand_proxy        # hand_proxy | bunds | jrc_100yr (only hand_proxy is implemented in v0.1)
+  hand_max_m: 5
+  river_buffer_m: 4000
+  min_upland_km2: 10000         # HydroSHEDS: keeps the Ravi, drops drains and nullahs
+
+buildings:
+  presence_threshold: 0.5       # Open Buildings 2.5D Temporal building_presence cut-off
+  sensitivity_thresholds: [0.4, 0.5, 0.6]
+  v3_min_confidence: 0.75       # Open Buildings v3 polygons
+  first_year: 2016
+  last_year: 2023               # last year of Open Buildings Temporal; Sentinel covers later years
+
+flood_event:
+  name: ravi_2025
+  pre_start: "2025-07-01"
+  pre_end: "2025-08-15"
+  event_start: "2025-08-26"
+  event_end: "2025-09-05"
+  peak_date: "2025-08-29"       # 220,000 cusecs at Shahdara
+
+change_detection:
+  revisit_days: 12              # Sentinel-1 repeat over Lahore
+  built_increase_db: 3.0        # starting value only: calibrate on labelled alerts before trusting it
+  persistence_passes: 2         # change must hold on this many consecutive passes
+  min_alert_area_ha: 0.5
+  pixel_size_m: 10
+  orbits: [107, 34, 100]        # relative orbits over Lahore (check_gee.py); each is compared only with itself
+  baseline_days: 90             # baseline = linear mean of this many days before the persistence passes
+  lookback_days: 60             # the persistence passes must fall inside this many days before the run date
+  history_passes: 8             # passes shown in the radar-change sparkline on the evidence card
+  dedupe_iou: 0.3               # overlap above this = same alert (update last_seen)
+  dedupe_buffer_m: 20           # alerts this close also count as the same alert
+  flooded_share: 0.10           # alert marked "flooded Aug 2025" if this share of it flooded
+  tile_px: 1024                 # Earth Engine pixel download tile (3 int16 bands = 6 MB)
+  evidence_buffer_m: 250        # Sentinel-2 evidence chip extends this far around the alert
+  evidence_px: 512
+
+exposure:
+  cell_m: 200                   # map "building cells" (UTM 43N grid, same ids as kinara.geo.utm.cell_id_at)
+  sample_window_px: 1           # first_built_year: search +-1 pixel (4 m) around a footprint centroid
+  population_dataset: "WorldPop/GP/100m/R2025A/v1/pop"   # supersedes WorldPop/GP/100m/pop (2000-2020)
+  population_year: 2025         # R2025A covers 2015-2030; years after the release are projections
+  marla_sqft: 272.25            # revenue marla; LDA schemes use 225
+  kanal_marla: 20
+
+flood_mapping:
+  open_water_max_db: -18.0      # VV below this after the event = open water (calibrate)
+  open_water_drop_db: 3.0       # and at least this much darker than before
+  urban_rise_db: 3.0            # double bounce: flooded built-up gets BRIGHTER
+
+validation:
+  target_precision: 0.80
+  sample_per_stratum: 150
+  cv_block_m: 2000
+  random_seed: 42
+
+api:
+  cors_origins: ["http://localhost:5173"]
+  token_minutes: 720            # one field day; set KINARA_SECRET_KEY in .env on a server
+  stale_after_days: 14          # amber banner when the last successful run is older than this
+  visited_radius_m: 300         # "Visited" is recorded when a verifier opens the form this close
