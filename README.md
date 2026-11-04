@@ -1,5 +1,7 @@
 # Kinara · Ravi Floodplain Watch
 
+Portfolio: https://muhammadshahidusman.github.io
+
 Flood exposure and candidate new-construction alerts for the Ravi floodplain in Lahore District, built on open satellite data from Google Earth Engine. First users: PDMA Punjab and the Lahore district administration.
 
 ## Quick start (Windows)
