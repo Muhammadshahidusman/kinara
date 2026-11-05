@@ -21,7 +21,6 @@ Calibrate the flood thresholds before quoting flooded-building numbers: fill `da
 
 | File | What's in it |
 |---|---|
-| [CLAUDE.md](CLAUDE.md) | Project brief, status, commands, rules. Start here. |
 | [PRD.md](PRD.md) | Problem, users, features, success metrics, release plan |
 | [TRD.md](TRD.md) | Architecture, data sources, methods, API, data model, licensing |
 | [UIUX.md](UIUX.md) | Screens, wireframes, colours, wording, accessibility |
