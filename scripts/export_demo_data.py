@@ -45,7 +45,13 @@ def main_(out_root: Path) -> None:
         (out / name).write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         return data
 
-    save_json("/api/summary", "summary.json")
+    summary = json.loads(get("/api/summary"))
+    # The run record carries a full copy of settings (local paths, Earth Engine project id): not public.
+    for run_key in ("last_run",):
+        if isinstance(summary.get(run_key), dict):
+            summary[run_key].pop("settings", None)
+    (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, separators=(",", ":")),
+                                      encoding="utf-8")
     save_json("/api/precision", "precision.json")
     for name in ("zones", "tehsils", "mouzas", "cells", "river"):
         save_json(f"/api/layers/{name}", f"layers/{name}.json")
