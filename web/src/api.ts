@@ -67,6 +67,12 @@ export interface Summary {
 export interface Precision { n: number; precision: number | null; ci_low: number | null; ci_high: number | null;
   meets_target: boolean; release_ready: boolean; min_verified: number }
 
+// Read-only public demo (VITE_DEMO=1 at build time): requests are answered from a static snapshot in
+// <base>/demo-data/ written by scripts/export_demo_data.py. Sign-in and every write are switched off.
+export const DEMO = import.meta.env.VITE_DEMO === "1";
+const DATA = `${import.meta.env.BASE_URL}demo-data/`;
+const DEMO_USER: User = { username: "demo", role: "viewer", full_name: "Demo visitor" };
+
 const TOKEN_KEY = "kinara.token";
 const USER_KEY = "kinara.user";
 const CACHE_PREFIX = "kinara.cache:";
@@ -78,7 +84,10 @@ function safeSet(k: string, v: string | null): void {
 
 export const session = {
   token: (): string | null => safeGet(TOKEN_KEY),
-  user: (): User | null => { const u = safeGet(USER_KEY); try { return u ? JSON.parse(u) : null; } catch { return null; } },
+  user: (): User | null => {
+    if (DEMO) return DEMO_USER;
+    const u = safeGet(USER_KEY); try { return u ? JSON.parse(u) : null; } catch { return null; }
+  },
   save(token: string, user: User) { safeSet(TOKEN_KEY, token); safeSet(USER_KEY, JSON.stringify(user)); },
   clear() { safeSet(TOKEN_KEY, null); safeSet(USER_KEY, null); },
 };
@@ -95,7 +104,64 @@ export const authHeaders = (): Record<string, string> => {
   return t ? { Authorization: `Bearer ${t}` } : {};
 };
 
+const jsonResponse = (data: unknown) =>
+  new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
+
+/** Same filter and order as the API's store.matches / FileStore.alerts (newest first, then id). */
+function filterAlerts(fc: AlertCollection, q: URLSearchParams): AlertCollection {
+  const status = q.get("status"), tehsil = q.get("tehsil"), since = q.get("since");
+  const minHa = q.get("min_ha"), flooded = q.get("flooded");
+  const limit = Number(q.get("limit") ?? 200);
+  const feats = fc.features.filter(({ properties: p }) =>
+    (!status || p.status === status) && (!tehsil || p.tehsil === tehsil)
+    && (!since || String(p.first_detected ?? "") >= since)
+    && (minHa == null || minHa === "" || (p.area_ha ?? 0) >= Number(minHa))
+    && (flooded == null || Boolean(p.flooded_2025) === (flooded === "true")));
+  feats.sort((a, b) => {
+    const ka = `${a.properties.first_detected ?? ""}\u0000${a.properties.alert_id}`;
+    const kb = `${b.properties.first_detected ?? ""}\u0000${b.properties.alert_id}`;
+    return ka < kb ? 1 : ka > kb ? -1 : 0;
+  });
+  return { type: "FeatureCollection", features: feats.slice(0, limit) };
+}
+
+/** Map an /api path to its file in the static snapshot. */
+function demoFile(p: string, q: URLSearchParams): string | null {
+  let m: RegExpMatchArray | null;
+  if (p === "/api/summary") return "summary.json";
+  if (p === "/api/precision") return "precision.json";
+  if (p === "/api/layers/flood_2025.png") return "flood_2025.png";
+  if ((m = p.match(/^\/api\/layers\/(zones|tehsils|mouzas|cells|river)$/))) return `layers/${m[1]}.json`;
+  if (p === "/api/zones") return "layers/zones.json";
+  if (p === "/api/exposure") return `exposure_${q.get("unit_type") ?? "all"}.json`;
+  if (p === "/api/alerts") return "alerts.json";
+  if ((m = p.match(/^\/api\/alerts\/([^/]+)\/image\/(before|after)\.png$/))) return `evidence/${m[1]}_${m[2]}.png`;
+  if ((m = p.match(/^\/api\/alerts\/([^/]+)\/evidence\.pdf$/))) return `pdf/${m[1]}.pdf`;
+  if ((m = p.match(/^\/api\/alerts\/([^/]+)$/))) return `alerts/${m[1]}.json`;
+  if (p === "/api/report/pre-monsoon.pdf") return "premonsoon.pdf";
+  if ((m = p.match(/^\/api\/export\/(exposure|alerts)\.zip$/))) return `export_${m[1]}.zip`;
+  return null;
+}
+
+async function demoRequest(path: string, init: RequestInit): Promise<Response> {
+  if ((init.method ?? "GET") !== "GET") throw new ApiError(403, "This is a read-only demo.");
+  const url = new URL(path, window.location.origin);
+  const file = demoFile(url.pathname, url.searchParams);
+  if (!file) throw new ApiError(404, "Not available in the demo.");
+  let r: Response;
+  try { r = await fetch(DATA + file); } catch { throw new ApiError(0, "network"); }
+  if (!r.ok) throw new ApiError(404, "Not available in the demo.");
+  if (url.pathname === "/api/alerts") return jsonResponse(filterAlerts(await r.json(), url.searchParams));
+  if (url.pathname === "/api/summary") {
+    const s = (await r.json()) as Summary;
+    if (s.flood_2025?.overlay) s.flood_2025.overlay.url = DATA + "flood_2025.png";
+    return jsonResponse({ ...s, stale: false });
+  }
+  return r;
+}
+
 async function request(path: string, init: RequestInit = {}): Promise<Response> {
+  if (DEMO) return demoRequest(path, init);
   let r: Response;
   try {
     r = await fetch(path, { ...init, headers: { ...authHeaders(), ...(init.headers ?? {}) } });

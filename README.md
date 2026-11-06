@@ -1,6 +1,6 @@
 # Kinara · Ravi Floodplain Watch
 
-Portfolio: https://muhammadshahidusman.github.io
+**[Live demo](https://muhammadshahidusman.github.io/kinara/)** (read-only snapshot) · Portfolio: https://muhammadshahidusman.github.io
 
 Flood exposure and candidate new-construction alerts for the Ravi floodplain in Lahore District, built on open satellite data from Google Earth Engine. First users: PDMA Punjab and the Lahore district administration.
 
@@ -14,6 +14,17 @@ Flood exposure and candidate new-construction alerts for the Ravi floodplain in 
 6. Alerts: `scripts\run_detect.bat` (once) or `scripts\schedule_detect.bat` (daily at 09:00).
 7. First login: `uv run python scripts/manage_users.py add <your-name> --role admin`.
 8. `scripts\run_api.bat` (API at http://localhost:8000/docs) and `scripts\run_web.bat` (app at http://localhost:5173).
+
+## Public demo
+
+The live demo is the same React app built in read-only mode: it reads a static snapshot of the API instead of a server, signs visitors in as a viewer and turns off verification and admin.
+
+```
+cd web && npm run build:demo && cd ..
+uv run python scripts/export_demo_data.py web/dist-demo
+```
+
+Then publish `web/dist-demo/` to the `gh-pages` branch. The snapshot holds every alert with its before/after Sentinel-2 chips and evidence sheet.
 
 Calibrate the flood thresholds before quoting flooded-building numbers: fill `data\reference\flood_validation_points.csv` (at least 30 geolocated places) and run `uv run python scripts/calibrate_flood.py`.
 

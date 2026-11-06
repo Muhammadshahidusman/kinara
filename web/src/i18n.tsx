@@ -48,6 +48,8 @@ const en = {
   fullName: "Full name", active: "Active", save: "Save", language: "Language", signedInAs: "Signed in as",
   definitionNote: "Land within 4 km of the Ravi and under 5 m above the nearest drainage (MERIT Hydro HAND). Not drawn from the 2025 flood.",
   loading: "Loading…", close: "Close", method: "Method",
+  demo: "Read-only demo with a data snapshot from", demoOff: "Sign-in, field verification and admin are turned off. Alerts are candidates that need checking on site.",
+  demoCode: "Code on GitHub",
 };
 type Dict = typeof en;
 
@@ -95,6 +97,8 @@ const ur: Dict = {
   fullName: "پورا نام", active: "فعال", save: "محفوظ کریں", language: "زبان", signedInAs: "بطور",
   definitionNote: "دریائے راوی سے 4 کلومیٹر کے اندر اور قریبی نکاسی سے 5 میٹر سے کم بلند زمین (MERIT Hydro HAND)۔ 2025 کے سیلاب سے اخذ نہیں کیا گیا۔",
   loading: "لوڈ ہو رہا ہے…", close: "بند کریں", method: "طریقہ",
+  demo: "صرف دیکھنے کے لیے ڈیمو، ڈیٹا اس تاریخ تک:", demoOff: "سائن اِن، موقع پر تصدیق اور انتظام بند ہیں۔ انتباہات ممکنہ ہیں اور ان کی موقع پر تصدیق ضروری ہے۔",
+  demoCode: "GitHub پر کوڈ",
 };
 
 const DICTS: Record<Lang, Dict> = { en, ur };

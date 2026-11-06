@@ -23,6 +23,7 @@ data/reference/boundaries/
 # Frontend
 web/node_modules/
 web/dist/
+web/dist-demo/
 
 # Editors / OS
 .vscode/

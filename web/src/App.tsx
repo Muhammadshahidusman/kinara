@@ -1,6 +1,6 @@
 // Kinara app shell (UIUX.md 3): nav rail + top bar on desktop, bottom tabs (Alerts, Map, Profile) on phones.
 import { useEffect, useState, type FormEvent } from "react";
-import { api, onApiState, session, type ExposureRow, type Summary, type User } from "./api";
+import { api, DEMO, onApiState, session, type ExposureRow, type Summary, type User } from "./api";
 import { Banner } from "./components";
 import { fmtDate } from "./format";
 import { useI18n } from "./i18n";
@@ -52,7 +52,7 @@ export default function App() {
 
   if (!user) return <LoginPage onLogin={(u) => { setUser(u); if (!route.parts.length) go(u.role === "field_officer" ? "alerts" : "overview"); }} />;
 
-  const signOut = () => { session.clear(); setUser(null); go(""); };
+  const signOut = () => { if (DEMO) { go("overview"); return; } session.clear(); setUser(null); go(""); };
   const page = route.parts[0] ?? (user.role === "field_officer" ? "alerts" : "overview");
   let body;
   if (page === "map") body = <MapPage summary={summary} route={route} />;
@@ -81,6 +81,9 @@ export default function App() {
         ))}
       </nav>
       <main className="content">
+        {DEMO && (
+          <Banner kind="warn">{t("demo")} {summary?.built_utc ? fmtDate(summary.built_utc) : "…"}. {t("demoOff")}{" "}
+            <a href="https://github.com/Muhammadshahidusman/kinara" target="_blank" rel="noopener">{t("demoCode")} ↗</a></Banner>)}
         {down && <Banner kind="error">{t("apiDown")}</Banner>}
         {summary && summary.stale && !down && (
           <Banner kind="warn">{summary.last_successful_run
