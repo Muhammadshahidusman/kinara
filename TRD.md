@@ -44,7 +44,7 @@ Design rules:
 
 ```
 Kinara/
-├── CLAUDE.md  PRD.md  TRD.md  UIUX.md  README.md
+├── PRD.md  TRD.md  UIUX.md  README.md
 ├── pyproject.toml  .python-version  (uv.lock after first `uv sync`)
 ├── config/settings.yaml          single source of settings
 ├── src/kinara/
